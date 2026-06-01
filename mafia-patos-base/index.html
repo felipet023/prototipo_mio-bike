@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>🦆 Mafia de Patos</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+  <!-- Firebase SDK v9 (compat mode — funciona como CDN sin bundler) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+</head>
+<body>
+
+<!-- ============================================================
+     SCREEN 1: INICIO
+     ============================================================ -->
+<div id="screen-inicio" class="screen active">
+  <div class="bg-grid"></div>
+  <div class="scanlines"></div>
+  <div class="inicio-content">
+    <div class="duck-logo">🦆</div>
+    <h1 class="game-title">MAFIA<br><span>DE PATOS</span></h1>
+    <p class="subtitle">El mercado clandestino te espera, padrino.</p>
+
+    <!-- Estado Firebase -->
+    <p id="fb-status-inicio" class="fb-status-tag">🔥 Firebase no configurado</p>
+
+    <div class="btn-group">
+      <button class="btn-primary" onclick="Game.goToRegister()">
+        <span>🔫 Unirse al juego</span>
+      </button>
+      <button class="btn-secondary" onclick="Game.goToAdmin()">
+        <span>👑 Panel del Director</span>
+      </button>
+      <button class="btn-ghost" onclick="Game.mostrarConfigFirebase()">
+        <span>🔥 Configurar Firebase</span>
+      </button>
+    </div>
+    <p class="version-tag">30 jugadores · 6 mafias · 5 rondas · 20 minutos</p>
+  </div>
+</div>
+
+<!-- ============================================================
+     SCREEN 2: REGISTRO DE JUGADOR
+     ============================================================ -->
+<div id="screen-registro" class="screen">
+  <div class="bg-grid"></div>
+  <div class="scanlines"></div>
+  <div class="registro-content">
+    <div class="duck-small">🦆</div>
+    <h2 class="section-title">Identificación</h2>
+    <p class="section-sub">Elige tu alias en el submundo</p>
+    <div class="input-group">
+      <label>Código de sala</label>
+      <input type="text" id="input-sala" placeholder="Ej: SALA01" maxlength="10" />
+    </div>
+    <div class="input-group">
+      <label>Tu alias mafioso</label>
+      <input type="text" id="input-nombre" placeholder="El Pato Negro..." maxlength="20" />
+    </div>
+    <button class="btn-primary" onclick="Game.registrarJugador()">
+      <span>🦆 Entrar a la mafia</span>
+    </button>
+    <button class="btn-ghost" onclick="Game.showScreen('screen-inicio')">← Volver</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     SCREEN 3: SALA DE ESPERA
+     ============================================================ -->
+<div id="screen-espera" class="screen">
+  <div class="bg-grid"></div>
+  <div class="scanlines"></div>
+  <div class="espera-content">
+    <h2 class="section-title">Sala de reunión</h2>
+    <div class="sala-info"><span id="espera-sala-nombre"></span></div>
+    <div class="tu-mafia-badge" id="tu-mafia-badge" style="display:none">
+      <span class="label">Tu mafia:</span>
+      <span id="tu-mafia-nombre"></span>
+    </div>
+    <div class="jugadores-counter">
+      <span id="jugadores-count">0</span>
+      <span class="of">/ 30</span>
+      <span class="label-j">jugadores</span>
+    </div>
+    <div id="lista-jugadores-espera" class="lista-jugadores"></div>
+    <div id="espera-status" class="espera-status">Esperando al director...</div>
+    <p class="espera-hint">El director iniciará el juego cuando todos estén listos.</p>
+  </div>
+</div>
+
+<!-- ============================================================
+     SCREEN 4: PANEL ADMIN (crear sala)
+     ============================================================ -->
+<div id="screen-admin" class="screen">
+  <div class="bg-grid"></div>
+  <div class="scanlines"></div>
+  <div class="admin-content">
+    <h2 class="section-title">👑 Panel del Director</h2>
+    <div class="input-group">
+      <label>Nombre de la sala</label>
+      <input type="text" id="admin-sala" placeholder="SALA01" maxlength="10" value="SALA01" />
+    </div>
+    <button class="btn-primary" onclick="Game.crearSala()">🦆 Crear sala</button>
+    <button class="btn-ghost mt10" onclick="Game.showScreen('screen-inicio')">← Volver</button>
+
+    <div id="admin-qr-section" style="display:none">
+      <div class="qr-container">
+        <div id="qr-code"></div>
+        <p class="qr-label">Escanea para unirte</p>
+        <p id="qr-url" class="qr-url"></p>
+      </div>
+      <div class="admin-stats">
+        <div class="stat-box">
+          <span id="admin-jugadores">0</span>
+          <label>Jugadores</label>
+        </div>
+        <div class="stat-box">
+          <span id="admin-mafias-count">6</span>
+          <label>Mafias</label>
+        </div>
+      </div>
+      <div id="admin-lista-jugadores" class="admin-lista"></div>
+      <button class="btn-primary mt20" onclick="Game.iniciarJuego()" id="btn-iniciar">
+        🚀 Iniciar Juego
+      </button>
+      <button class="btn-secondary mt10" onclick="Game.resetearSala()">🔄 Resetear sala</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     SCREEN 5: DASHBOARD PRINCIPAL (jugador)
+     ============================================================ -->
+<div id="screen-dashboard" class="screen">
+  <div class="bg-grid"></div>
+  <div class="scanlines"></div>
+
+  <div class="dashboard-header">
+    <div class="player-info">
+      <span class="player-duck">🦆</span>
+      <div>
+        <div id="dash-nombre" class="player-name"></div>
+        <div id="dash-mafia"  class="player-mafia"></div>
+      </div>
+    </div>
+    <div class="round-info">
+      <div id="dash-ronda"  class="round-badge">RONDA 1/5</div>
+      <div id="dash-timer"  class="timer">3:00</div>
+    </div>
+  </div>
+
+  <div class="recursos-grid">
+    <div class="recurso-card dinero">
+      <div class="recurso-icon">💰</div>
+      <div id="dash-dinero"     class="recurso-valor">$1000</div>
+      <div class="recurso-label">Dinero</div>
+    </div>
+    <div class="recurso-card reputacion">
+      <div class="recurso-icon">⭐</div>
+      <div id="dash-reputacion" class="recurso-valor">50</div>
+      <div class="recurso-label">Reputación</div>
+    </div>
+    <div class="recurso-card influencia">
+      <div class="recurso-icon">💎</div>
+      <div id="dash-influencia" class="recurso-valor">30</div>
+      <div class="recurso-label">Influencia</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="Game.showTab('tab-accion')">🎯 Acción</button>
+    <button class="tab"        onclick="Game.showTab('tab-ranking')">📊 Ranking</button>
+    <button class="tab"        onclick="Game.showTab('tab-mafias')">🦆 Mafias</button>
+  </div>
+
+  <!-- Tab: Acción -->
+  <div id="tab-accion" class="tab-content active">
+    <div id="votacion-panel">
+      <h3 class="panel-title">¿Cuál es tu movimiento?</h3>
+      <p id="evento-ronda" class="evento-badge"></p>
+      <div class="acciones-grid">
+        <button class="accion-btn cooperar"   onclick="Game.votar('cooperar')">
+          <span class="accion-icon">🤝</span>
+          <span class="accion-nombre">Cooperar</span>
+          <span class="accion-desc">Ganancias estables, +reputación</span>
+        </button>
+        <button class="accion-btn traicionar" onclick="Game.votar('traicionar')">
+          <span class="accion-icon">🔪</span>
+          <span class="accion-nombre">Traicionar</span>
+          <span class="accion-desc">Ganancias altas, -reputación</span>
+        </button>
+        <button class="accion-btn negociar"   onclick="Game.votar('negociar')">
+          <span class="accion-icon">📜</span>
+          <span class="accion-nombre">Negociar</span>
+          <span class="accion-desc">Bonus si otro también negocia</span>
+        </button>
+        <button class="accion-btn robar"      onclick="Game.votar('robar')">
+          <span class="accion-icon">💸</span>
+          <span class="accion-nombre">Robar</span>
+          <span class="accion-desc">Alto riesgo, alto reward</span>
+        </button>
+        <button class="accion-btn alianza"    onclick="Game.votar('alianza')">
+          <span class="accion-icon">🦅</span>
+          <span class="accion-nombre">Alianza</span>
+          <span class="accion-desc">Protección mutua temporal</span>
+        </button>
+      </div>
+      <div id="voto-confirmado" class="voto-confirmado" style="display:none">
+        <span id="voto-texto"></span>
+      </div>
+    </div>
+
+    <div id="esperando-panel" class="esperando-panel" style="display:none">
+      <div class="loading-duck">🦆</div>
+      <p>Esperando resultados...</p>
+    </div>
+
+    <div id="resultado-panel" class="resultado-panel" style="display:none">
+      <h3 class="panel-title">Resultados de la ronda</h3>
+      <div id="resultado-contenido"></div>
+    </div>
+  </div>
+
+  <!-- Tab: Ranking -->
+  <div id="tab-ranking" class="tab-content">
+    <h3 class="panel-title">📊 Clasificación</h3>
+    <div id="ranking-list" class="ranking-list"></div>
+  </div>
+
+  <!-- Tab: Mafias -->
+  <div id="tab-mafias" class="tab-content">
+    <h3 class="panel-title">🦆 Las familias</h3>
+    <div id="mafias-list" class="mafias-list"></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     SCREEN 6: ADMIN EN JUEGO
+     ============================================================ -->
+<div id="screen-admin-juego" class="screen">
+  <div class="bg-grid"></div>
+  <div class="scanlines"></div>
+  <div class="admin-juego-content">
+    <div class="admin-header">
+      <h2 class="section-title" style="font-size:24px">🎮 Director</h2>
+      <div id="admin-timer-big" class="timer-big">3:00</div>
+    </div>
+    <div id="admin-ronda-actual" class="ronda-actual">RONDA 1 / 5</div>
+    <div id="admin-votos-count"  class="votos-count">0 / 6 mafias votaron</div>
+    <div id="admin-evento-actual" class="admin-evento"></div>
+    <div id="admin-ranking-live"  class="admin-ranking"></div>
+    <div class="admin-actions">
+      <button class="btn-secondary" onclick="Game.forzarResultados()">⚡ Forzar resultados</button>
+      <button class="btn-danger"    onclick="Game.terminarJuego()">🏁 Terminar juego</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     SCREEN 7: PANTALLA FINAL
+     ============================================================ -->
+<div id="screen-final" class="screen">
+  <div class="bg-grid"></div>
+  <div class="scanlines"></div>
+  <div class="final-content">
+    <div class="confetti-container" id="confetti"></div>
+    <div class="winner-crown">👑</div>
+    <h2 class="winner-title">¡LA GRAN MAFIA!</h2>
+    <div id="winner-name"  class="winner-name"></div>
+    <div id="winner-stats" class="winner-stats"></div>
+
+    <div class="final-tabs">
+      <button class="tab active" onclick="Game.showFinalTab('ftab-ranking')">🏆 Ranking</button>
+      <button class="tab"        onclick="Game.showFinalTab('ftab-traiciones')">🔪 Traiciones</button>
+      <button class="tab"        onclick="Game.showFinalTab('ftab-estrategia')">🧠 Estrategia</button>
+    </div>
+
+    <div id="ftab-ranking"    class="tab-content active"><div id="final-ranking"></div></div>
+    <div id="ftab-traiciones" class="tab-content"><div id="final-traiciones"></div></div>
+    <div id="ftab-estrategia" class="tab-content"><div id="final-estrategia" class="estrategia-texto"></div></div>
+
+    <button class="btn-secondary mt20" onclick="Game.reiniciar()">🔄 Nueva partida</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     OVERLAY: CONFIGURAR FIREBASE
+     ============================================================ -->
+<div id="overlay-firebase" class="overlay" style="display:none">
+  <div class="overlay-card firebase-card">
+    <div style="font-size:42px">🔥</div>
+    <h3 class="evento-titulo" style="color:var(--neon-yellow)">Configurar Firebase</h3>
+    <p class="evento-desc" style="font-size:12px;text-align:left">
+      1. Ve a <strong>console.firebase.google.com</strong><br>
+      2. Crea proyecto → Realtime Database → Crear base de datos<br>
+      3. Reglas: pon <code>".read":true, ".write":true</code><br>
+      4. Configuración del proyecto → Agregar app web → copia los datos
+    </p>
+    <div class="fb-inputs">
+      <div class="input-group">
+        <label>API Key *</label>
+        <input type="text" id="fb-apiKey" placeholder="AIzaSy..." />
+      </div>
+      <div class="input-group">
+        <label>Database URL *</label>
+        <input type="text" id="fb-databaseURL" placeholder="https://mi-proyecto-default-rtdb.firebaseio.com" />
+      </div>
+      <div class="input-group">
+        <label>Project ID *</label>
+        <input type="text" id="fb-projectId" placeholder="mi-proyecto-12345" />
+      </div>
+      <div class="input-group">
+        <label>Auth Domain (opcional)</label>
+        <input type="text" id="fb-authDomain" placeholder="mi-proyecto.firebaseapp.com" />
+      </div>
+    </div>
+    <p id="fb-status" style="font-family:var(--font-mono);font-size:12px;color:var(--text-muted)">Sin conectar</p>
+    <button class="btn-primary" onclick="Game.guardarConfigFirebase()">🔥 Conectar Firebase</button>
+    <button class="btn-ghost"   onclick="Game.cerrarConfigFirebase()">✕ Cerrar</button>
+  </div>
+</div>
+
+<!-- OVERLAY: EVENTO ESPECIAL -->
+<div id="overlay-evento" class="overlay" style="display:none">
+  <div class="overlay-card evento-card">
+    <div id="evento-icon"   class="evento-icon-big"></div>
+    <h3 id="evento-titulo"  class="evento-titulo"></h3>
+    <p  id="evento-desc"    class="evento-desc"></p>
+    <button class="btn-primary" onclick="Game.cerrarEvento()">Entendido 💪</button>
+  </div>
+</div>
+
+<!-- OVERLAY: TRAICIÓN -->
+<div id="overlay-traicion" class="overlay" style="display:none">
+  <div class="overlay-card traicion-card">
+    <div class="traicion-anim">🔪🦆💀</div>
+    <h3 class="traicion-titulo">¡TRAICIÓN!</h3>
+    <p id="traicion-texto" class="traicion-texto"></p>
+    <button class="btn-danger" onclick="Game.cerrarTraicion()">😤 Malditos</button>
+  </div>
+</div>
+
+<!-- OVERLAY: RESUMEN RONDA (admin) -->
+<div id="overlay-ronda-admin" class="overlay" style="display:none">
+  <div class="overlay-card admin-ronda-card">
+    <h3 class="panel-title">📊 Resumen de Ronda</h3>
+    <div id="admin-ronda-resumen"></div>
+    <button class="btn-primary mt20" onclick="Game.siguienteRonda()">➡️ Siguiente Ronda</button>
+  </div>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>
