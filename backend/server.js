@@ -5,7 +5,7 @@ const seedAdmin = require('./src/startup/seedAdmin');
 async function start() {
   await seedAdmin();
   app.listen(env.port, () => {
-    console.log(`Laboratorio API CRUD ejecutándose en http://localhost:${env.port}`);
+    console.log(`TUKI BIKES API ejecutándose en http://localhost:${env.port}`);
   });
 }
 

@@ -22,5 +22,10 @@ module.exports = {
     name: process.env.ADMIN_NAME,
     email: process.env.ADMIN_EMAIL,
     password: process.env.ADMIN_PASSWORD
+  },
+  demo: {
+    name: process.env.DEMO_NAME,
+    email: process.env.DEMO_EMAIL,
+    password: process.env.DEMO_PASSWORD
   }
 };
