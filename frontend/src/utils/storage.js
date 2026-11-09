@@ -1,6 +1,13 @@
-const TOKEN_KEY = 'labcrud_token';
-const USER_KEY = 'labcrud_user';
-export function saveSession(token, user) { localStorage.setItem(TOKEN_KEY, token); localStorage.setItem(USER_KEY, JSON.stringify(user)); }
-export function getToken() { return localStorage.getItem(TOKEN_KEY); }
-export function getUser() { const value = localStorage.getItem(USER_KEY); return value ? JSON.parse(value) : null; }
-export function clearSession() { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(USER_KEY); }
+export function getToken() { return localStorage.getItem('bs_token'); }
+export function getUser() {
+  const raw = localStorage.getItem('bs_user');
+  try { return raw ? JSON.parse(raw) : null; } catch { return null; }
+}
+export function saveSession(token, user) {
+  localStorage.setItem('bs_token', token);
+  localStorage.setItem('bs_user', JSON.stringify(user));
+}
+export function clearSession() {
+  localStorage.removeItem('bs_token');
+  localStorage.removeItem('bs_user');
+}

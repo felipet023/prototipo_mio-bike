@@ -1,50 +1,16 @@
-# LAB CRUD — Frontend
+# React + Vite
 
-React + Vite para consumir el backend del laboratorio.
+This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
 
-## Requisitos
+Currently, two official plugins are available:
 
-- Node.js 20+
-- Backend ejecutándose en `http://localhost:3000`
-- Base de datos `lab_crud`
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
-## Instalar
+## React Compiler
 
-```bash
-npm install
-```
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-## Ejecutar
+## Expanding the Oxlint configuration
 
-```bash
-npm run dev
-```
-
-Frontend: `http://localhost:5173`
-
-## Usuarios de prueba
-
-Admin:
-- `admin@labcrud.local`
-- `Password123!`
-
-Cliente:
-- `cliente@labcrud.local`
-- `Password123!`
-
-## Responsabilidades
-
-- `assets`: estilos y recursos.
-- `components`: componentes reutilizables.
-- `config`: configuración del frontend.
-- `context`: estado global de autenticación.
-- `hooks`: hooks propios.
-- `pages`: pantallas.
-- `services`: comunicación con la API.
-- `utils`: almacenamiento de sesión.
-
-## Flujo
-
-Login → AuthContext → JWT en localStorage → `api.js` agrega Bearer token → backend verifica JWT → autorización por rol.
-
-El botón Eliminar solo aparece para `admin`, pero el backend también verifica el rol. Ocultar un botón en React no constituye seguridad.
+If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.

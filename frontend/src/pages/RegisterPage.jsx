@@ -1,11 +1,34 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { AlertCircle, Eye, EyeOff, Lock, UserPlus } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
 import { register } from '../services/auth.service';
 
 export default function RegisterPage() {
-  const navigate = useNavigate(); const [form, setForm] = useState({ nombre: '', email: '', password: '' }); const [error, setError] = useState(''); const [showPassword, setShowPassword] = useState(false);
-  function change(event) { setForm({ ...form, [event.target.name]: event.target.value }); }
-  async function submit(event) { event.preventDefault(); setError(''); try { await register(form); navigate('/login'); } catch (err) { setError(err.message); } }
-  return (<main className="auth-page"><form className="card auth-card" onSubmit={submit}><h1>LAB CRUD</h1><h2>Crear usuario</h2>{error && <p className="error"><AlertCircle size={16} />{error}</p>}<input name="nombre" placeholder="Nombre" value={form.nombre} onChange={change} required /><input name="email" type="email" placeholder="Correo" value={form.email} onChange={change} required /><div className="field"><Lock size={16} /><input name="password" type={showPassword ? 'text' : 'password'} placeholder="Contraseña" value={form.password} onChange={change} autoComplete="new-password" className="has-toggle" required /><button type="button" className="toggle-visibility" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}>{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}</button></div><button type="submit"><UserPlus size={16} />Registrarme</button><p>¿Ya tienes cuenta? <Link to="/login">Iniciar sesión</Link></p></form></main>);
+  const navigate = useNavigate();
+  const [form, setForm] = useState({ nombre: '', email: '', password: '' });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setLoading(true); setError('');
+    try {
+      await register(form);
+      navigate('/login');
+    } catch (err) { setError(err.message); }
+    finally { setLoading(false); }
+  }
+
+  return (
+    <main className="page auth">
+      <h1>Crear cuenta</h1>
+      <form onSubmit={handleSubmit}>
+        <input placeholder="Nombre" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} required />
+        <input type="email" placeholder="Correo" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
+        <input type="password" placeholder="Contraseña (8+ chars, mayúscula, número, símbolo)" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
+        {error && <p className="error">{error}</p>}
+        <button className="btn-primary" disabled={loading}>{loading ? 'Registrando...' : 'Registrarse'}</button>
+      </form>
+      <p>¿Ya tienes cuenta? <Link to="/login">Ingresar</Link></p>
+    </main>
+  );
 }
